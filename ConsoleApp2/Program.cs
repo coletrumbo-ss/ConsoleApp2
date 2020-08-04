@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Microsoft.Xrm.Tooling.Connector;
 using Microsoft.Xrm.Sdk;
-using Microsoft.Crm.Sdk.Messages;
-using Microsoft.Xrm.Sdk.Query;
-using System.Activities.Statements;
+using System.Globalization;
 
 namespace Dynamics365CRUD
 {
@@ -18,7 +12,7 @@ namespace Dynamics365CRUD
         private const string trialAccountApi = "https://sscole5.api.crm.dynamics.com/";
         private const string password = "2nephi3120.D";
         private const string username = "ct@sscole5.onmicrosoft.com";
-        private const string filename = "data.csv";
+        private const string filename = @"C:\Users\colet\Downloads\data.csv";
         static void Main(string[] args)
         {
             try
@@ -27,7 +21,7 @@ namespace Dynamics365CRUD
                 CrmServiceClient conn = new CrmServiceClient(connectionString);
 
                 IOrganizationService service;
-                service = (IOrganizationService)conn.OrganizationWebProxyClient != null ? (IOrganizationService)conn.OrganizationWebProxyClient : (IOrganizationService)conn.OrganizationServiceProxy;
+                service = (IOrganizationService)conn.OrganizationWebProxyClient ?? (IOrganizationService)conn.OrganizationServiceProxy;
 
                 // Get the file's text.
                 string whole_file = System.IO.File.ReadAllText(filename);
@@ -81,31 +75,37 @@ namespace Dynamics365CRUD
                 // account["primarycontactid"]
                 // account["revenue"]
                 // account["telephone1"]
-                
-                contact["firstname"] = values[1,0];
-                contact["lastname"] = values[1,1];
-                contact["cole_birthday3"] = values[1,2];
-                account["name"] = values[1,3];
-                cole_insuranceplan2["cole_name"] = values[1,4];
-                cole_insuranceplan2["cole_policynumber"] = values[1,5];
-                cole_insuranceplan2["cole_groupnumber"] = values[1,6];
-                contact["gendercode"] = values[1,7];
-                contact["address1_line1"] = values[1,8];
-                contact["emailaddress1"] = values[1,9];
-                contact["telephone1"] = values[1,10];
-                contact["cole_height"] = values[1,11];
-                contact["cole_weight"] = values[1,12];
-                contact["cole_contacttype"] = values[1,13];
-                contact["cole_licensetype"] = values[1,14];
-                contact["cole_specialization"] = values[1,15];
-                account["name"] = values[1,16];
 
-                Guid accountId = service.Create(account);
-                Console.WriteLine("New account id: {0}.", accountId.ToString());
-                Guid cole_insuranceplan2Id = service.Create(cole_insuranceplan2);
-                Console.WriteLine("New cole_insuranceplan2 id: {0}.", cole_insuranceplan2Id.ToString());
-                Guid contactId = service.Create(contact);
-                Console.WriteLine("New contact id: {0}.", contactId.ToString());
+                for(var n = 1; n < num_rows; n++)
+                {
+                    Console.WriteLine(values[n, 2]); contact["cole_birthday3"] = DateTime.Parse(values[n, 2]);
+                    Console.WriteLine(values[n, 12]); contact["cole_weight"] = decimal.Parse(values[n, 12], CultureInfo.InvariantCulture);
+                    Console.WriteLine(values[n, 6]); cole_insuranceplan2["cole_groupnumber"] = int.Parse(values[n, 6]);
+                    Console.WriteLine(values[n, 11]); contact["cole_height"] = int.Parse(values[n, 11]);
+                    Console.WriteLine(values[n, 7]); contact["gendercode"] = new OptionSetValue(int.Parse(values[n, 7]));
+                    //Console.WriteLine(values[n, 13]); contact["cole_contacttype"] = new OptionSetValue(int.Parse(values[n, 13]));
+                    //if(values[n, 13] == "patient")
+                    //{
+                    //    Console.WriteLine(values[n, 14]); contact["cole_licensetype"] = new OptionSetValue(int.Parse(values[n, 14]));
+                    //}
+                    Console.WriteLine(values[n, 0]); contact["firstname"] = values[n, 0];
+                    Console.WriteLine(values[n, 1]); contact["lastname"] = values[n, 1];
+                    Console.WriteLine(values[n, 3]); account["name"] = values[n, 3];
+                    Console.WriteLine(values[n, 4]); cole_insuranceplan2["cole_name"] = values[n, 4];
+                    Console.WriteLine(values[n, 5]); cole_insuranceplan2["cole_policynumber"] = values[n, 5];
+                    Console.WriteLine(values[n, 8]); contact["address1_line1"] = values[n, 8];
+                    Console.WriteLine(values[n, 9]); contact["emailaddress1"] = values[n, 9];
+                    Console.WriteLine(values[n, 10]); contact["telephone1"] = values[n, 10];
+                    Console.WriteLine(values[n, 15]); contact["cole_specialization"] = values[n, 15];
+                    Console.WriteLine(values[n, 16]); account["name"] = values[n, 16];
+
+                    Guid accountId = service.Create(account);
+                    Console.WriteLine("New account id: {0}.", accountId.ToString());
+                    Guid cole_insuranceplan2Id = service.Create(cole_insuranceplan2);
+                    Console.WriteLine("New cole_insuranceplan2 id: {0}.", cole_insuranceplan2Id.ToString());
+                    Guid contactId = service.Create(contact);
+                    Console.WriteLine("New contact id: {0}.", contactId.ToString());
+                }
             }
             catch (Exception ex)
             {
