@@ -62,7 +62,7 @@ namespace Dynamics365CRUD
                     Entity cole_insuranceplan2 = new Entity("cole_insuranceplan2");
 
                     Guid planId;
-                    //Guid accountId; 
+                    //Guid accountId;
                     string accountName;
                     var firstname = values[n, 0];
                     var lastname = values[n, 1];
@@ -71,6 +71,7 @@ namespace Dynamics365CRUD
                     var res = conn.GetEntityDataByFetchSearchEC(fetchXML);
                     if (res.Entities.Count == 0)
                     {
+                        // Create Contact (Requires Insurance Plan ID)
                         var policynumber = values[n, 5];
                         var fetchXMLPlan = $@"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'><entity name='";
                         fetchXMLPlan += @"cole_insuranceplan2'><filter type='and'><condition attribute='";
@@ -79,6 +80,7 @@ namespace Dynamics365CRUD
                         var resPlan = conn.GetEntityDataByFetchSearchEC(fetchXMLPlan);
                         if (resPlan.Entities.Count == 0)
                         {
+                            // Create Insurance Plan (Requires Account Name)
                             // TODO find better way to check existing Account.
                             // FOR NOW see if account exists. All I have from data.csv is the account name.
                             accountName = values[n, 3];
@@ -89,6 +91,7 @@ namespace Dynamics365CRUD
                             var resAccount = conn.GetEntityDataByFetchSearchEC(fetchXMLAccount);
                             if (resAccount.Entities.Count == 0)
                             {
+                                // Create Account
                                 Console.WriteLine(values[n, 3]); account["name"] = values[n, 3];
                                 Guid accountId = service.Create(account);
                                 Console.WriteLine("New account id: {0}. Name: {1}", accountId.ToString(), accountName);
@@ -108,20 +111,45 @@ namespace Dynamics365CRUD
                                 // account["revenue"]
                                 // account["telephone1"]
                             }
-                            Console.WriteLine(values[n, 6]); cole_insuranceplan2["cole_groupnumber"] = int.Parse(values[n, 6]);
-                            Console.WriteLine(values[n, 4]); cole_insuranceplan2["cole_name"] = values[n, 4];
-                            Console.WriteLine(values[n, 5]); cole_insuranceplan2["cole_policynumber"] = values[n, 5];
-                            var planMap = {"G": 370510000, "S": 370510001, "B": 370510002};
-                            cole_insuranceplan2["cole_plantype"] = planMap[values[n, 4]]; //G = 370510000, S = 370510001, B = 370510002
-                            Console.WriteLine("Plan built under Account: " + accountName);
+                            //Console.WriteLine(values[n, 6]);
+                            cole_insuranceplan2["cole_groupnumber"] = int.Parse(values[n, 6]);
+                            //Console.WriteLine(values[n, 4]);
+                            cole_insuranceplan2["cole_name"] = values[n, 4];
+                            //Console.WriteLine(values[n, 5]);
+                            cole_insuranceplan2["cole_policynumber"] = values[n, 5];
+                            //Console.WriteLine("Type of cole_insuranceplan2: {0}", cole_insuranceplan2.GetType());
+                            //Console.WriteLine("Type of cole_insuranceplan2 Attributes: {0}", cole_insuranceplan2.Attributes); //Microsoft.Xrm.Sdk.AttributeCollection
+                            //Console.WriteLine(cole_insuranceplan2.Attributes.Keys); //System.Collections.Generic.Dictionary`2+KeyCollection[System.String,System.Object]
+                            //var lookatme = cole_insuranceplan2.Attributes.Keys; // just has the three keys I already used, not all the entity's keys.
+                            //foreach(var a in cole_insuranceplan2.Attributes)
+                            //{
+                            //    Console.WriteLine(a.ToString()); // [cole_groupnumber, 1] etc.
+                            //}
+                            cole_insuranceplan2.Attributes.Add("cole_plantype", new OptionSetValue());
+                            switch (values[n, 4])
+                            {
+                                case "G":
+                                    //Console.WriteLine("G type is: ");
+                                    ((OptionSetValue)cole_insuranceplan2["cole_plantype"]).Value = 370510000;
+                                    break;
+                                case "S":
+                                    ((OptionSetValue)cole_insuranceplan2["cole_plantype"]).Value = 370510001;
+                                    break;
+                                case "B":
+                                    ((OptionSetValue)cole_insuranceplan2["cole_plantype"]).Value = 370510002;
+                                    break;
+                                default:
+                                    throw new Exception();
+                            }
                             planId = service.Create(cole_insuranceplan2);
+                            Console.WriteLine("Plan built under Account: " + accountName);
                             Console.WriteLine("New cole_insuranceplan2 id: {0}.", planId.ToString());
                         }
                         else
                         {
                             planId = (Guid)resPlan.Entities[0]["Id"];
                         }
-
+                        // Create
                         Console.WriteLine(values[n, 2]); contact["cole_birthday3"] = DateTime.Parse(values[n, 2]);
                         Console.WriteLine(values[n, 12]); contact["cole_weight"] = decimal.Parse(values[n, 12], CultureInfo.InvariantCulture);
                         Console.WriteLine(values[n, 11]); contact["cole_height"] = int.Parse(values[n, 11]);
