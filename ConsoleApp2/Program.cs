@@ -12,8 +12,7 @@ namespace Dynamics365CRUD
         private const string trialAccount = "https://orgf3fa0ec3.crm.dynamics.com";
         private const string password = "2nephi3120.D";
         private const string username = "ct@sscole6.onmicrosoft.com";
-        private const string filename = @"data.csv";
-        //private const string filename = @"test-lookups-contact.csv";
+        private const string dataFile = @"data.csv";
         static void Main(string[] args)
         {
             try
@@ -25,7 +24,7 @@ namespace Dynamics365CRUD
                 service = (IOrganizationService)conn.OrganizationWebProxyClient ?? (IOrganizationService)conn.OrganizationServiceProxy;
 
                 // Get the file's text.
-                string whole_file = System.IO.File.ReadAllText(filename);
+                string whole_file = System.IO.File.ReadAllText(dataFile);
 
                 // Split into lines.
                 whole_file = whole_file.Replace('\n', '\r');
@@ -49,7 +48,7 @@ namespace Dynamics365CRUD
                     }
                 }
                 
-                // Use row to Create, Update, Associate records
+                // Use row to Create and Associate records
                 for (var n = 1; n < num_rows; n++)
                 {
                     Entity contact = new Entity("contact");
@@ -67,7 +66,7 @@ namespace Dynamics365CRUD
                     var fetchXML = $@"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'><entity name='contact'><filter type='and'><condition attribute='emailaddress1' operator='eq' value='{email}' /><condition attribute='firstname' operator='eq' value='{firstname}' /><condition attribute='lastname' operator='eq' value='{lastname}' /></filter></entity></fetch>";
                     var res = conn.GetEntityDataByFetchSearchEC(fetchXML);
                     contactId = res.Entities.Count > 0 ? res.Entities[0].Id : Guid.Empty;
-                    
+
                     contact["cole_birthday3"] = DateTime.Parse(values[n, 2]);
                     contact["cole_weight"] = decimal.Parse(values[n, 12], CultureInfo.InvariantCulture);
                     contact["cole_height"] = int.Parse(values[n, 11]);
@@ -109,10 +108,7 @@ namespace Dynamics365CRUD
                     }
 
                     // Lookup to Account.
-                    // Lookup field is (cole_serviceproviderid) not required, only for doctors (cole_contacttype, cole_licensetype)
-                    // TODO find better way to check existing Account.
-                    // FOR NOW see if account exists. All I have from data.csv is the account name.
-                    // TODO plans are missing Patient, Insurance Company
+                    // Lookup field is (cole_serviceproviderid) not required
                     accountName = values[n, 3];
                     var fetchXMLAccount = $@"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'><entity name='";
                     fetchXMLAccount += @"account'><filter type='and'><condition attribute='";
@@ -125,7 +121,6 @@ namespace Dynamics365CRUD
                         account["name"] = values[n, 3];
                         Guid accountId = service.Create(account);
                         Console.WriteLine("New account id: {0}. Name: {1}", accountId.ToString(), accountName);
-                        // TODO add all data to account.
                     }
 
                     if (resPlan.Entities.Count == 0)
@@ -145,17 +140,15 @@ namespace Dynamics365CRUD
                     if (contactId == Guid.Empty)
                     {
                         // Create Contact
-                        // TODO doctor, minor with parent info
-                        // Doctor has lookup to Account (account tells us doctor is part of private practice, hospital, etc.)
                         contactId = service.Create(contact);
                         Console.WriteLine("New contact id: {0}.", contactId.ToString());
-
-                        // TODO update insurance plan with patient
                     }
                     else
                     {
                         contact.Id = contactId;
-                        service.Update(contact); //Entity Id must be specified for Update
+
+                        // Update will handle associations
+                        service.Update(contact);
                     }
                 }
             }
