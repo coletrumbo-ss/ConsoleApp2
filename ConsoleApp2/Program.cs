@@ -4,19 +4,27 @@ using Microsoft.Xrm.Tooling.Connector;
 using Microsoft.Xrm.Sdk;
 using System.Globalization;
 using Microsoft.Xrm.Sdk.Messages;
+using System.IO;
 
 namespace Dynamics365CRUD
 {
     class Program
     {
-        private const string trialAccount = "https://orgf3fa0ec3.crm.dynamics.com";
-        private const string password = "2nephi3120.D";
-        private const string username = "ct@sscole6.onmicrosoft.com";
+        private const string credentialFile = @"c:\Users\colet\creds.txt";
         private const string dataFile = @"data.csv";
         static void Main(string[] args)
         {
             try
             {
+                string trialAccount;
+                string password;
+                string username;
+                using (StreamReader sr = File.OpenText(credentialFile))
+                {
+                    trialAccount = sr.ReadLine();
+                    password = sr.ReadLine();
+                    username = sr.ReadLine();
+                }
                 var connectionString = @"AuthType = Office365; Url = " + trialAccount + ";Username=" + username + ";Password=" + password;
                 CrmServiceClient conn = new CrmServiceClient(connectionString);
 
